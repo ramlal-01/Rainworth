@@ -1,100 +1,24 @@
 import mongoose from "mongoose";
 
-const projectSchema = new mongoose.Schema(
-  {
-    // ✅ Basic project metadata
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    location: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    state: {
-      type: String,
-      trim: true,
-    },
-    district: {
-      type: String,
-      trim: true,
-    },
-
-    // ✅ Residence / site details
-    residenceType: {
-      type: String,
-      enum: ["Independent House", "Apartment (Individual)", "Apartment (Entire Building)", "Colony"],
-      required: true,
-    },
-    roofAreaSqM: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
-    openSpaceAreaSqM: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    // ✅ Rainfall data
-    annualRainfallMm: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    monthlyRainfall: [
-      {
-        month: {
-          type: String,
-          enum: [
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-          ],
-        },
-        rainfallMm: {
-          type: Number,
-          min: 0,
-        },
-      },
-    ],
-
-    // ✅ Calculation results
-    harvestingPotentialLiters: {
-      type: Number,
-      default: 0,
-    },
-    recommendedStructure: {
-      type: String,
-      trim: true,
-    },
-    estimatedCost: {
-      type: Number,
-      default: 0,
-    },
-    sustainabilityScore: {
-      type: Number, // 0–100
-      default: 0,
-    },
-
-    // ✅ Report / Export info
-    pdfReportUrl: {
-      type: String, // link to saved PDF in cloud/local
-    },
-
-    // ✅ Metadata
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Optional, only if User schema exists
-    },
+const projectSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  createdAt: { type: Date, default: Date.now },
+  location: { type: String, required: true },
+  residenceType: { 
+    type: String, 
+    enum: ["Independent House", "Apartment", "Colony"], 
+    required: true 
   },
-  {
-    timestamps: true, // auto adds createdAt & updatedAt
-  }
-);
+  numberOfDwellers: { type: Number, required: true },
+  numberOfFlats: { type: Number },
+  openSpaceArea: { type: Number, required: true },
+  roofType: { 
+    type: String, 
+    enum: ["Concrete", "Tile", "Sheet"], 
+    required: true 
+  },
+  roofArea: { type: Number, required: true },
+  roofAreaPolygon: { type: Object } // optional GeoJSON
+});
 
-const Project = mongoose.model("Project", projectSchema);
-
-export default Project;
+export const Project = mongoose.model("Project", projectSchema);
