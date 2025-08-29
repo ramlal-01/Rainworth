@@ -5,8 +5,8 @@ import Form from './pages/Form'
 const App = () => {
   return (
       <Routes>
-        <Route path="/" element={<Form />} />
-        <Route path="*" element={<Form />} />
+        <Route path="/form" element={<Form />} />
+        {/* <Route path="*" element={<Form />} /> */}
       </Routes>
   )
 }
