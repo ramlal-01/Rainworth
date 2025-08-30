@@ -24,6 +24,24 @@ const Form = () => {
   const navigate = useNavigate();
   const location = useLocation(); // Ab yeh kaam karega
 
+  // Test API connection on component mount
+  useEffect(() => {
+    const testAPI = async () => {
+      try {
+        console.log('🧪 Testing API connection...');
+        const response = await fetch('/api/projects');
+        if (response.ok) {
+          console.log('✅ API connection successful');
+        } else {
+          console.log('❌ API connection failed:', response.status);
+        }
+      } catch (error) {
+        console.log('❌ API connection error:', error);
+      }
+    };
+    testAPI();
+  }, []);
+
   // Hardcoded language content for demonstration
   const langContent = {
     en: {
@@ -180,11 +198,9 @@ const Form = () => {
   };
 
   const handleCalculate = async (e) => {
+    console.log('🚀 handleCalculate function called');
     e.preventDefault();
     console.log('🚀 Form submitted! Calculating water potential with data:', formData);
-    
-    // Debug: Check if function is being called
-    alert('Form submission started!');
     
     // Validate required fields
     if (!formData.location || !formData.roofArea || !formData.residenceType || !formData.roofType || !formData.dwellers) {
@@ -418,6 +434,10 @@ const Form = () => {
             <button
               type="submit"
               disabled={isSubmitting}
+              onClick={(e) => {
+                console.log('🔥 Button clicked!');
+                // Don't prevent default here, let the form handle it
+              }}
               className={`w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-lg text-lg font-bold rounded-full text-white transition-all duration-200 transform ${
                 isSubmitting 
                   ? 'bg-gray-400 cursor-not-allowed' 
