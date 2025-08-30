@@ -24,6 +24,7 @@ const RainwaterDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloadLoading, setDownloadLoading] = useState(false);
   const { projectId } = useParams();
   const statCardsRef = useRef([]);
 
@@ -131,6 +132,49 @@ const RainwaterDashboard = () => {
 
     fetchProjectData();
   }, [projectId]);
+
+  // Download report function
+  const handleDownloadReport = async () => {
+    if (!projectId) {
+      alert('Report download is not available for demo data. Please create a project first.');
+      return;
+    }
+
+    try {
+      setDownloadLoading(true);
+      const response = await fetch(`/api/reports/${projectId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report');
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `rainwater-report-${projectId.slice(-6)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      alert('Failed to download report. Please try again.');
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (data) {
@@ -348,7 +392,7 @@ const RainwaterDashboard = () => {
           </div>
           
           {/* Sustainability Progress */}
-          {/* <div className="mt-6">
+          <div className="mt-6">
             <div className="flex justify-between items-center mb-2">
               <span className="text-gray-700 font-medium">Water Sustainability</span>
               <span className="text-blue-600 font-bold">{data.sustainability} months/year</span>
@@ -357,11 +401,11 @@ const RainwaterDashboard = () => {
               <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-300" style={{ width: '80%' }}></div>
             </div>
             <p className="text-sm text-gray-500 mt-2">Your rainwater harvesting system can cover 80% of your annual water needs</p>
-          </div> */}
+          </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8 ">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
           {/* Stat Card 1 */}
           <div ref={el => statCardsRef.current[0] = el} className="bg-white rounded-xl shadow-md p-5 border-l-4 border-l-blue-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             <div className="flex justify-between items-start mb-4">
@@ -387,7 +431,7 @@ const RainwaterDashboard = () => {
           </div>
           
           {/* Stat Card 3 */}
-          {/* <div ref={el => statCardsRef.current[2] = el} className="bg-white rounded-xl shadow-md p-5 border-l-4 border-l-amber-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div ref={el => statCardsRef.current[2] = el} className="bg-white rounded-xl shadow-md p-5 border-l-4 border-l-amber-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-sm font-medium text-gray-500">Sustainability</h3>
               <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
@@ -396,7 +440,7 @@ const RainwaterDashboard = () => {
             </div>
             <p className="text-2xl font-bold text-gray-800">{data.stats.sustainability} months</p>
             <p className="text-sm text-gray-500 mt-1">per year</p>
-          </div> */}
+          </div>
           
           {/* Stat Card 4 */}
           <div ref={el => statCardsRef.current[3] = el} className="bg-white rounded-xl shadow-md p-5 border-l-4 border-l-red-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
@@ -537,19 +581,35 @@ const RainwaterDashboard = () => {
           <div className="bg-white rounded-2xl shadow-md p-6 lg:col-span-1">
             <h3 className="text-lg font-semibold text-gray-800 mb-6">Actions</h3>
             <div className="space-y-4">
-              <button className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 text-white font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
-                <i className="fas fa-download"></i>
-                <span>Download Full Report</span>
+              <button 
+                onClick={handleDownloadReport}
+                disabled={downloadLoading}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 text-white font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {downloadLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Generating Report...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-download"></i>
+                    <span>Download Full Report</span>
+                  </>
+                )}
               </button>
               <button className="w-full py-3 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <i className="fas fa-share-alt"></i>
                 <span>Share Results</span>
               </button>
-              <button className="w-full py-3 rounded-xl bg-gray-100 text-white font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+              <button className="w-full py-3 rounded-xl bg-gray-100 text-gray-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <i className="fas fa-edit"></i>
                 <span>Modify Inputs</span>
               </button>
-               
+              <button className="w-full py-3 rounded-xl bg-green-100 text-green-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+                <i className="fas fa-user-tie"></i>
+                <span>Contact Expert</span>
+              </button>
             </div>
           </div>
         </div>
