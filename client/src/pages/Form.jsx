@@ -21,6 +21,7 @@ const Form = () => {
 
   const [isEnglish, setIsEnglish] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const navigate = useNavigate();
   const location = useLocation(); // Ab yeh kaam karega
 
@@ -108,6 +109,74 @@ const Form = () => {
 
   const content = isEnglish ? langContent.en : langContent.hi;
 
+  // Function to get current location
+  const getCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by this browser.');
+      return;
+    }
+
+    setIsGettingLocation(true);
+    
+    try {
+      // Get user's coordinates
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+      console.log('Got coordinates:', latitude, longitude);
+
+      // Use reverse geocoding to get city name
+      const response = await fetch(
+        `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=1ae831541622ce6d45c976ef01eb06b0`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to get location information');
+      }
+
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const locationInfo = data[0];
+        // Construct location string: City, State, Country
+        let locationString = locationInfo.name;
+        if (locationInfo.state) {
+          locationString += `, ${locationInfo.state}`;
+        }
+        locationString += `, ${locationInfo.country}`;
+        
+        console.log('Location found:', locationString);
+        
+        // Update the form data
+        setFormData(prevState => ({ 
+          ...prevState, 
+          location: locationString 
+        }));
+      } else {
+        throw new Error('No location information found');
+      }
+    } catch (error) {
+      console.error('Error getting location:', error);
+      if (error.code === 1) {
+        alert('Location access denied. Please enable location services and try again.');
+      } else if (error.code === 2) {
+        alert('Location unavailable. Please check your internet connection.');
+      } else if (error.code === 3) {
+        alert('Location request timed out. Please try again.');
+      } else {
+        alert(`Error getting location: ${error.message}`);
+      }
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -192,15 +261,30 @@ const Form = () => {
     try {
       setIsSubmitting(true);
       
+      // Map frontend values to backend expected enum values
+      const residenceTypeMapping = {
+        'house': 'Independent House',
+        'apartment_individual': 'Apartment',
+        'apartment_building': 'Apartment',
+        'colony': 'Colony',
+        'ngo_govt': 'Colony' // Map to closest available option
+      };
+
+      const roofTypeMapping = {
+        'concrete': 'Concrete',
+        'tile': 'Tile',
+        'sheet': 'Sheet'
+      };
+
       // Prepare data for backend API
       const projectData = {
         name: `${formData.location} Assessment`,
         location: formData.location,
-        residenceType: formData.residenceType,
+        residenceType: residenceTypeMapping[formData.residenceType] || formData.residenceType,
         numberOfDwellers: parseInt(formData.dwellers),
         numberOfFlats: formData.residenceType === 'apartment_building' ? parseInt(formData.dwellers) : 1,
         openSpaceArea: parseFloat(formData.openSpaceLength) * parseFloat(formData.openSpaceBreadth) || 0,
-        roofType: formData.roofType,
+        roofType: roofTypeMapping[formData.roofType] || formData.roofType,
         roofArea: parseFloat(formData.roofArea)
       };
 
@@ -215,8 +299,18 @@ const Form = () => {
         body: JSON.stringify(projectData)
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        console.log('Error response body:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { message: errorText };
+        }
         throw new Error(errorData.message || 'Failed to submit project data');
       }
 
@@ -227,7 +321,12 @@ const Form = () => {
       navigate(`/dashboard/${result.project._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert(`Error submitting form: ${error.message}. Please try again.`);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      alert(`Error submitting form: ${error.message}. Please check the console for more details.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -316,15 +415,13 @@ const Form = () => {
         <form onSubmit={handleCalculate} className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Location Input */}
           <LocationInput
-          
             label={content.locationLabel}
             placeholder={content.locationManual}
             value={formData.location}
             onChange={handleChange}
-            onUseCurrent={() => {
-              console.log('Fetching current location via Google Maps API');
-            }}
+            onUseCurrent={getCurrentLocation}
             currentLocationLabel={content.locationCurrent}
+            isGettingLocation={isGettingLocation}
           />
 
           {/* Roof Area Input - DIRECTLY IN FORM COMPONENT */}
