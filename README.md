@@ -1,14 +1,14 @@
 Project Title
 
-Rainwater Harvesting  and Artificital Recharge Project
+🌧️ Rainwater Harvesting  and Artificital Recharge Project
 
-1. Project Overview
+📌 Project Overview
 
 a) Designing and development of an application for on spot assessment of Roof Top Rain water harvesting and artificial recharge potential and size of the RTRWH and AR.
 
 b) Rainwater harvesting is environmentally crucial as it reduces runoff, prevents soil erosion, and recharges depleted groundwater tables, directly combating water scarcity. Economically, it lowers water bills by providing a free, sustainable source for non-potable needs, decreasing the demand on municipal supplies. 
 
-2. Objectives
+🎯 Objectives
 
 a) The project's main objective is to create a user-friendly application for the on-spot assessment and design of rooftop rainwater harvesting (RTRWH) and artificial recharge (AR) systems.
 
@@ -16,13 +16,13 @@ b) It solves the critical problem of technical complexity and lack of awareness,
 
 c) By providing instant, tailored calculations, the application empowers individuals and communities to efficiently collect rainwater, reduce urban runoff, and actively participate in replenishing local groundwater levels.
 
-3. 🛠️ Features
+ 🛠️ Features
 
 a) This application's core feature is an on-spot assessment calculator that determines a rooftop's rainwater harvesting potential and suggests the optimal size for collection tanks and artificial recharge structures. I
 
 b) It includes a cost estimation tool to provide an immediate budget for the proposed system. Additionally, the app features simple data visualization to present the potential water savings and system design in an easy-to-understand format.
 
-4. 🗂️ Project Structure
+🗂️ Project Structure
 
 Rainwater-Harvesting-Project/
 │── client/                # Frontend application  
@@ -40,7 +40,7 @@ Rainwater-Harvesting-Project/
 │── server/                # Backend application (API, database, logic)  
 
 
-5. ⚙️ Installation / Setup
+ ⚙️ Installation / Setup
 
 1️⃣ Clone the Repository
 
@@ -71,7 +71,7 @@ Example .env (server):
 PORT=5000
 MONGO_URI=your_database_url
 
-6. 🚀 Usage
+ 🚀 Usage
 
 a) Start the backend server and frontend client as described in the setup section.
 
@@ -87,7 +87,7 @@ c) Navigate through the dashboard to:
     3) Analyze efficiency of the harvesting system.
 
 
-7. 📊 Results / Output
+ 📊 Results / Output
 
 a) Interactive dashboard showing collected vs. utilized water.
 
@@ -96,7 +96,7 @@ b) Graphs of storage levels, rainfall patterns, and usage efficiency.
 c) Example Screenshots:
 (Add your images here, e.g., system diagrams, app screenshots, simulation outputs).
 
-8.📖 Documentation
+📖 Documentation
 
 a) Rainwater Harvesting Research (NCBI)
 
@@ -104,7 +104,7 @@ b) Ministry of Jal Shakti, Govt. of India – Rainwater Harvesting Guidelines
 
 c) Detailed project report is available in the /docs folder.
 
-9. 👥 Team Members / Contributors
+ 👥 Team Members / Contributors
 
 a) Project Lead / Full-Stack Developer (Ramlal) – Coordinated the project, managed tasks, and contributed to both frontend & backend.
 
@@ -118,6 +118,6 @@ e) UI/UX Designer(– Designed landing page layouts, and improved user experienc
 
 f) Testing & Deployment Engineer(Ramlalf) – Tested the system for bugs, optimized performance, and deployed project on hosting platforms.
 
-10. 📜 License
+ 📜 License
 
 a) This project is licensed under the MIT License – see the LICENSE.
