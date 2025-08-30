@@ -181,7 +181,10 @@ const Form = () => {
 
   const handleCalculate = async (e) => {
     e.preventDefault();
-    console.log('Calculating water potential with data:', formData);
+    console.log('🚀 Form submitted! Calculating water potential with data:', formData);
+    
+    // Debug: Check if function is being called
+    alert('Form submission started!');
     
     // Validate required fields
     if (!formData.location || !formData.roofArea || !formData.residenceType || !formData.roofType || !formData.dwellers) {
