@@ -395,7 +395,7 @@ const Form = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       {/* A. Header */}
       <Header
         className=""
@@ -406,11 +406,14 @@ const Form = () => {
       />
       
       {/* B. Form Section */}
-      <main className="bg-white p-6 sm:p-10 rounded-3xl shadow-2xl w-full transform transition-transform duration-500 hover:scale-[1.01]">
-        <h2 className="text-3xl font-bold text-gray-700 mb-2">{content.mainHeading}</h2>
-        <p className="text-gray-500 mb-8">
-          {content.subHeading}
-        </p>
+      <div className="container mx-auto px-6 py-8 max-w-5xl">
+        <main className="bg-white p-8 sm:p-12 rounded-3xl shadow-2xl w-full transform transition-transform duration-500 hover:scale-[1.01] border border-gray-100">
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4">{content.mainHeading}</h2>
+            <p className="text-gray-600 text-lg">
+              {content.subHeading}
+            </p>
+          </div>
         
         <form onSubmit={handleCalculate} className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Location Input */}
@@ -524,7 +527,8 @@ const Form = () => {
 
 
         </form>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

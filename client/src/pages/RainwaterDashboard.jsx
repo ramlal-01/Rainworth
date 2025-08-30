@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { GlobeAltIcon, HomeIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/solid';
+import { useAuth } from '../context/AuthContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -30,8 +32,20 @@ const RainwaterDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloadLoading, setDownloadLoading] = useState(false);
+  const [isEnglish, setIsEnglish] = useState(true);
   const { projectId } = useParams();
   const statCardsRef = useRef([]);
+  const navigate = useNavigate();
+  const { user, logout, isAuthenticated } = useAuth();
+
+  const toggleLanguage = () => {
+    setIsEnglish(!isEnglish);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
 
   useEffect(() => {
@@ -132,11 +146,11 @@ const RainwaterDashboard = () => {
           location: project.location,
           reportDate: new Date().toLocaleDateString(),
           reportId: `RH-${projectId.slice(-6)}`,
-          sustainability: ((calculation.annualHarvest / calculation.annualConsumption) * 10).toFixed(1),
+          sustainability: Math.min(12, ((calculation.annualHarvest / calculation.annualConsumption) * 12)).toFixed(1),
           stats: {
             totalHarvested: Math.round(calculation.annualHarvest),
             perPersonPotential: Math.round(calculation.annualHarvest / project.numberOfDwellers),
-            sustainability: ((calculation.annualHarvest / calculation.annualConsumption) * 10).toFixed(1),
+            sustainability: Math.min(12, ((calculation.annualHarvest / calculation.annualConsumption) * 12)).toFixed(1),
             annualRequirement: Math.round(calculation.annualConsumption),
             tankSize: 5000,
             cost: calculation.structureCost,
@@ -602,13 +616,44 @@ const RainwaterDashboard = () => {
           </div>
         </div>
         <nav className="flex items-center space-x-6">
-          <a href="#" className="text-gray-600 hover:text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">Dashboard</a>
-          <a href="#" className="text-gray-600 hover:text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">Reports</a>
-          <a href="#" className="text-gray-600 hover:text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">Settings</a>
-          <button className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium flex items-center space-x-2">
-            <i className="fas fa-user-circle"></i>
-            <span>Account</span>
-          </button>
+          <div className="relative inline-block text-left">
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="inline-flex justify-center items-center rounded-full border border-transparent px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors duration-200 shadow-sm"
+            >
+              <GlobeAltIcon className="h-5 w-5 mr-2 text-white" />
+              {isEnglish ? 'English' : 'हिंदी'}
+            </button>
+          </div>
+          <a href="/reports" className="text-gray-600 hover:text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">Reports</a>
+          <Link
+            to="/"
+            className="inline-flex justify-center items-center rounded-full border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 text-gray-700"
+          >
+            <HomeIcon className="h-5 w-5 mr-2 text-gray-500" />
+            {isEnglish ? 'Home' : 'होम'}
+          </Link>
+          {isAuthenticated() ? (
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-600 text-sm">Welcome, {user?.name}</span>
+              <button 
+                onClick={handleLogout}
+                className="inline-flex justify-center items-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2 text-gray-500" />
+                {isEnglish ? 'Logout' : 'लॉगआउट'}
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="inline-flex justify-center items-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
+              <i className="fas fa-user-circle mr-2"></i>
+              {isEnglish ? 'Login' : 'लॉगिन'}
+            </Link>
+          )}
         </nav>
       </header>
 
@@ -632,112 +677,92 @@ const RainwaterDashboard = () => {
             </div>
           </div>
           
-          {/* Sustainability Progress */}
-          <div className="mt-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-700 font-medium">Water Sustainability</span>
-              <span className="text-blue-600 font-bold">{data.sustainability} months/year</span>
-            </div>
-            <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
-              <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-300" style={{ width: '80%' }}></div>
-            </div>
-            <p className="text-sm text-gray-500 mt-2">Your rainwater harvesting system can cover 80% of your annual water needs</p>
-          </div>
+
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
           {/* Stat Card 1 */}
-          <div ref={el => statCardsRef.current[0] = el} className="bg-white rounded-xl shadow-md p-5 border-l-4 border-l-blue-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div ref={el => statCardsRef.current[0] = el} className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-lg p-6 border border-blue-200 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl group">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-sm font-medium text-gray-500">Total Harvested Water</h3>
-              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                <i className="fas fa-tint text-blue-500"></i>
+              <h3 className="text-sm font-semibold text-blue-700 uppercase tracking-wide">Total Harvested Water</h3>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <i className="fas fa-tint text-white text-lg"></i>
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-800">{data.stats.totalHarvested.toLocaleString()} L</p>
-            <p className="text-sm text-gray-500 mt-1">per year</p>
+            <p className="text-3xl font-bold text-gray-800 mb-1">{data.stats.totalHarvested.toLocaleString()}</p>
+            <p className="text-sm text-blue-600 font-medium">Liters per year</p>
           </div>
           
           {/* Stat Card 2 */}
-          <div ref={el => statCardsRef.current[1] = el} className="bg-white rounded-xl shadow-md p-5 border-l-4 border-l-teal-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div ref={el => statCardsRef.current[1] = el} className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-2xl shadow-lg p-6 border border-teal-200 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl group">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-sm font-medium text-gray-500">Per Person Potential</h3>
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
-                <i className="fas fa-users text-teal-500"></i>
+              <h3 className="text-sm font-semibold text-teal-700 uppercase tracking-wide">Per Person Potential</h3>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <i className="fas fa-users text-white text-lg"></i>
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-800">{data.stats.perPersonPotential.toLocaleString()} L</p>
-            <p className="text-sm text-gray-500 mt-1">per year</p>
+            <p className="text-3xl font-bold text-gray-800 mb-1">{data.stats.perPersonPotential.toLocaleString()}</p>
+            <p className="text-sm text-teal-600 font-medium">Liters per year</p>
           </div>
           
+
+          
           {/* Stat Card 3 */}
-          <div ref={el => statCardsRef.current[2] = el} className="bg-white rounded-xl shadow-md p-5 border-l-4 border-l-amber-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div ref={el => statCardsRef.current[2] = el} className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl shadow-lg p-6 border border-red-200 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl group">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-sm font-medium text-gray-500">Sustainability</h3>
-              <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-                <i className="fas fa-calendar-alt text-amber-500"></i>
+              <h3 className="text-sm font-semibold text-red-700 uppercase tracking-wide">Annual Requirement</h3>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <i className="fas fa-bullseye text-white text-lg"></i>
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-800">{data.stats.sustainability} months</p>
-            <p className="text-sm text-gray-500 mt-1">per year</p>
+            <p className="text-3xl font-bold text-gray-800 mb-1">{data.stats.annualRequirement.toLocaleString()}</p>
+            <p className="text-sm text-red-600 font-medium">Liters per year</p>
           </div>
           
           {/* Stat Card 4 */}
-          <div ref={el => statCardsRef.current[3] = el} className="bg-white rounded-xl shadow-md p-5 border-l-4 border-l-red-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <div ref={el => statCardsRef.current[3] = el} className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl shadow-lg p-6 border border-purple-200 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl group">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-sm font-medium text-gray-500">Annual Requirement</h3>
-              <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
-                <i className="fas fa-bullseye text-red-500"></i>
+              <h3 className="text-sm font-semibold text-purple-700 uppercase tracking-wide">Tank Size</h3>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <i className="fas fa-archive text-white text-lg"></i>
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-800">{data.stats.annualRequirement.toLocaleString()} L</p>
-            <p className="text-sm text-gray-500 mt-1">per year</p>
-          </div>
-          
-          {/* Stat Card 5 */}
-          <div ref={el => statCardsRef.current[4] = el} className="bg-white rounded-xl shadow-md p-5 border-l-4 border-l-purple-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-sm font-medium text-gray-500">Tank Size</h3>
-              <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                <i className="fas fa-archive text-purple-500"></i>
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-gray-800">{data.stats.tankSize.toLocaleString()} L</p>
-            <p className="text-sm text-gray-500 mt-1">recommended</p>
+            <p className="text-3xl font-bold text-gray-800 mb-1">{data.stats.tankSize.toLocaleString()}</p>
+            <p className="text-sm text-purple-600 font-medium">Liters recommended</p>
           </div>
         </div>
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Rainfall vs Harvested Water Chart */}
-          <div className="bg-white rounded-2xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">Rainfall vs. Harvested Water</h3>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">Monthly</span>
-                <button className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <i className="fas fa-ellipsis-h text-gray-500"></i>
-                </button>
+          <div className="bg-gradient-to-br from-white to-blue-50 rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl border border-blue-100">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Rainfall vs. Harvested Water</h3>
+                <p className="text-sm text-gray-600">Monthly comparison of rainfall and water collection</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <span className="text-xs px-3 py-1.5 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 rounded-full font-medium">Monthly Data</span>
               </div>
             </div>
-            <div className="h-80">
+            <div className="h-80 bg-white rounded-xl p-4 shadow-inner">
               <Bar data={rainfallHarvestChartData} options={chartOptions1} />
             </div>
           </div>
           
           {/* Demand vs Supply Chart */}
-          <div className="bg-white rounded-2xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">Demand vs. Supply</h3>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full">Monthly</span>
-                <button className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <i className="fas fa-ellipsis-h text-gray-500"></i>
-                </button>
+          <div className="bg-gradient-to-br from-white to-amber-50 rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl border border-amber-100">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Demand vs. Supply</h3>
+                <p className="text-sm text-gray-600">Monthly water demand versus harvested supply</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <span className="text-xs px-3 py-1.5 bg-gradient-to-r from-amber-100 to-amber-200 text-amber-700 rounded-full font-medium">Monthly Data</span>
               </div>
             </div>
-            <div className="h-80">
+            <div className="h-80 bg-white rounded-xl p-4 shadow-inner">
               <Bar data={consumeSurplusChartData} options={chartOptions2} />
             </div>
           </div>
@@ -746,72 +771,83 @@ const RainwaterDashboard = () => {
         {/* Additional Info & Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Cost Breakdown */}
-          <div className="bg-white rounded-2xl shadow-md p-6 lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-800 mb-6">Cost Breakdown</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Tank & Installation</span>
-                <span className="font-medium text-gray-800">₹{data.costBreakdown.tankInstallation.toLocaleString()}</span>
+          <div className="bg-gradient-to-br from-white to-green-50 rounded-3xl shadow-xl p-8 lg:col-span-1 border border-green-100">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg mr-4">
+                <i className="fas fa-rupee-sign text-white text-lg"></i>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Filtration System</span>
-                <span className="font-medium text-gray-800">₹{data.costBreakdown.filtration.toLocaleString()}</span>
+              <h3 className="text-xl font-bold text-gray-800">Cost Analysis</h3>
+            </div>
+            <div className="space-y-5">
+              <div className="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm">
+                <span className="text-gray-700 font-medium">Tank & Installation</span>
+                <span className="font-bold text-gray-800">₹{data.costBreakdown.tankInstallation.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Piping & Labor</span>
-                <span className="font-medium text-gray-800">₹{data.costBreakdown.pipingLabor.toLocaleString()}</span>
+              <div className="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm">
+                <span className="text-gray-700 font-medium">Filtration System</span>
+                <span className="font-bold text-gray-800">₹{data.costBreakdown.filtration.toLocaleString()}</span>
               </div>
-              <div className="h-px bg-gray-200 my-4"></div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-800 font-semibold">Total Estimated Cost</span>
-                <span className="font-bold text-blue-600">₹{data.stats.cost.toLocaleString()}</span>
+              <div className="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm">
+                <span className="text-gray-700 font-medium">Piping & Labor</span>
+                <span className="font-bold text-gray-800">₹{data.costBreakdown.pipingLabor.toLocaleString()}</span>
+              </div>
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-4"></div>
+              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-green-100 to-green-200 rounded-xl shadow-sm">
+                <span className="text-green-800 font-bold text-lg">Total Investment</span>
+                <span className="font-bold text-green-700 text-xl">₹{data.stats.cost.toLocaleString()}</span>
               </div>
             </div>
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-600">Payback Period</span>
-                <span className="font-medium text-gray-800">~{data.costBreakdown.paybackPeriod} years</span>
+            <div className="mt-8 p-4 bg-blue-50 rounded-xl">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-blue-700 font-semibold">Payback Period</span>
+                <span className="font-bold text-blue-800">{data.costBreakdown.paybackPeriod} years</span>
               </div>
-              <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-300" style={{ width: '65%' }}></div>
+              <div className="h-3 rounded-full bg-gray-200 overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400 shadow-sm" style={{ width: '65%' }}></div>
               </div>
+              <p className="text-xs text-blue-600 mt-2">Expected return on investment</p>
             </div>
           </div>
           
           {/* System Details */}
-          <div className="bg-white rounded-2xl shadow-md p-6 lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-800 mb-6">System Details</h3>
+          <div className="bg-gradient-to-br from-white to-indigo-50 rounded-3xl shadow-xl p-8 lg:col-span-1 border border-indigo-100">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg mr-4">
+                <i className="fas fa-cogs text-white text-lg"></i>
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">System Details</h3>
+            </div>
             <div className="space-y-5">
-              <div>
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                    <i className="fas fa-layer-group text-blue-500"></i>
+              <div className="p-4 bg-white rounded-xl shadow-sm border-l-4 border-l-blue-400">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <i className="fas fa-layer-group text-blue-600"></i>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-700">Roof Type</h4>
-                    <p className="text-sm text-gray-500">{data.stats.roofType}</p>
+                    <h4 className="font-semibold text-gray-800">Roof Type</h4>
+                    <p className="text-blue-600 font-medium">{data.stats.roofType}</p>
                   </div>
                 </div>
               </div>
-              <div>
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-                    <i className="fas fa-water text-green-500"></i>
+              <div className="p-4 bg-white rounded-xl shadow-sm border-l-4 border-l-green-400">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                    <i className="fas fa-water text-green-600"></i>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-700">Water Stored</h4>
-                    <p className="text-sm text-gray-500">{Math.round(data.stats.waterStored).toLocaleString()} liters</p>
+                    <h4 className="font-semibold text-gray-800">Water Stored</h4>
+                    <p className="text-green-600 font-medium">{Math.round(data.stats.waterStored).toLocaleString()} liters</p>
                   </div>
                 </div>
               </div>
-              <div>
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                    <i className="fas fa-digging text-purple-500"></i>
+              <div className="p-4 bg-white rounded-xl shadow-sm border-l-4 border-l-purple-400">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <i className="fas fa-digging text-purple-600"></i>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-700">Recharge Pits</h4>
-                    <p className="text-sm text-gray-500">{data.stats.rechargePits} pits</p>
+                    <h4 className="font-semibold text-gray-800">Recharge Pits</h4>
+                    <p className="text-purple-600 font-medium">{data.stats.rechargePits} pits</p>
                   </div>
                 </div>
               </div>
@@ -819,34 +855,38 @@ const RainwaterDashboard = () => {
           </div>
           
           {/* Actions */}
-          <div className="bg-white rounded-2xl shadow-md p-6 lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-800 mb-6">Actions</h3>
+          <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-xl p-8 lg:col-span-1 border border-gray-100">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center shadow-lg mr-4">
+                <i className="fas fa-tools text-white text-lg"></i>
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">Quick Actions</h3>
+            </div>
             <div className="space-y-4">
               <button 
                 onClick={handleDownloadReport}
                 disabled={downloadLoading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 text-white font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold flex items-center justify-center space-x-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
               >
                 {downloadLoading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Generating Report...</span>
                   </>
                 ) : (
                   <>
-                    <i className="fas fa-download"></i>
+                    <i className="fas fa-download text-lg"></i>
                     <span>Download Full Report</span>
                   </>
                 )}
               </button>
-              {/* <button className="w-full py-3 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
-                <i className="fas fa-share-alt"></i>
-                <span>Share Results</span>
-              </button> */}
-              <button className="w-full py-3 rounded-xl bg-gray-100 text-gray-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
-                <i className="fas fa-edit"></i>
+              <Link
+                to="/form"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold flex items-center justify-center space-x-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl transform hover:scale-105"
+              >
+                <i className="fas fa-edit text-lg"></i>
                 <span>Modify Inputs</span>
-              </button>
+              </Link>
               {/* <button className="w-full py-3 rounded-xl bg-green-100 text-green-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <i className="fas fa-user-tie"></i>
                 <span>Contact Expert</span>

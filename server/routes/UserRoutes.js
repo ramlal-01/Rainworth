@@ -1,6 +1,6 @@
 import express from "express";
 import { signup, login, getProfile } from "../controllers/UserController.js";
-// import { auth } from "../middleware/auth.js";
+import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -11,6 +11,6 @@ router.post("/signup", signup);
 router.post("/login", login);
 
 // GET /api/users/profile
-router.get("/profile", getProfile);
+router.get("/profile", auth, getProfile);
 
 export default router;

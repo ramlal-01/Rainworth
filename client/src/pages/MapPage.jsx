@@ -126,9 +126,9 @@ const MapPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-blue-700 text-white flex-wrap gap-4">
+      <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-600 to-blue-800 text-white flex-wrap gap-4 shadow-xl">
         <button 
           onClick={handleBack}
           className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white px-4 py-2 rounded font-bold transition-colors shadow-sm"
