@@ -21,6 +21,7 @@ const Form = () => {
 
   const [isEnglish, setIsEnglish] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const navigate = useNavigate();
   const location = useLocation(); // Ab yeh kaam karega
 
@@ -107,6 +108,74 @@ const Form = () => {
   };
 
   const content = isEnglish ? langContent.en : langContent.hi;
+
+  // Function to get current location
+  const getCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by this browser.');
+      return;
+    }
+
+    setIsGettingLocation(true);
+    
+    try {
+      // Get user's coordinates
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+      console.log('Got coordinates:', latitude, longitude);
+
+      // Use reverse geocoding to get city name
+      const response = await fetch(
+        `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=1ae831541622ce6d45c976ef01eb06b0`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to get location information');
+      }
+
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const locationInfo = data[0];
+        // Construct location string: City, State, Country
+        let locationString = locationInfo.name;
+        if (locationInfo.state) {
+          locationString += `, ${locationInfo.state}`;
+        }
+        locationString += `, ${locationInfo.country}`;
+        
+        console.log('Location found:', locationString);
+        
+        // Update the form data
+        setFormData(prevState => ({ 
+          ...prevState, 
+          location: locationString 
+        }));
+      } else {
+        throw new Error('No location information found');
+      }
+    } catch (error) {
+      console.error('Error getting location:', error);
+      if (error.code === 1) {
+        alert('Location access denied. Please enable location services and try again.');
+      } else if (error.code === 2) {
+        alert('Location unavailable. Please check your internet connection.');
+      } else if (error.code === 3) {
+        alert('Location request timed out. Please try again.');
+      } else {
+        alert(`Error getting location: ${error.message}`);
+      }
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -346,15 +415,13 @@ const Form = () => {
         <form onSubmit={handleCalculate} className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Location Input */}
           <LocationInput
-          
             label={content.locationLabel}
             placeholder={content.locationManual}
             value={formData.location}
             onChange={handleChange}
-            onUseCurrent={() => {
-              console.log('Fetching current location via Google Maps API');
-            }}
+            onUseCurrent={getCurrentLocation}
             currentLocationLabel={content.locationCurrent}
+            isGettingLocation={isGettingLocation}
           />
 
           {/* Roof Area Input - DIRECTLY IN FORM COMPONENT */}
