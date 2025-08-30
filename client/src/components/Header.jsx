@@ -21,7 +21,7 @@ const Header = ({ title, homeLabel, isEnglish, onToggleLanguage }) => {
           <button
             type="button"
             onClick={onToggleLanguage}
-            className="inline-flex justify-center items-center rounded-full border bg-white px-4 py-2 text-sm font-medium text-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            className="inline-flex justify-center items-center rounded-full border border-transparent px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors duration-200 shadow-sm"
           >
             <GlobeAltIcon className="h-5 w-5 mr-2 text-white" />
             {isEnglish ? 'English' : 'हिंदी'}
