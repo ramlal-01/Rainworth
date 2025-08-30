@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Form</title>
+</head>
+<body>
+    <h1>Test Form Submission</h1>
+    <form id="testForm">
+        <input type="text" name="location" placeholder="Location" required>
+        <input type="number" name="roofArea" placeholder="Roof Area" required>
+        <select name="residenceType" required>
+            <option value="">Select Type</option>
+            <option value="Independent House">Independent House</option>
+        </select>
+        <select name="roofType" required>
+            <option value="">Select Roof</option>
+            <option value="Concrete">Concrete</option>
+        </select>
+        <input type="number" name="dwellers" placeholder="Number of Dwellers" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('Form submitted!');
+            
+            const formData = new FormData(this);
+            const data = {
+                name: formData.get('location') + ' Assessment',
+                location: formData.get('location'),
+                residenceType: formData.get('residenceType'),
+                numberOfDwellers: parseInt(formData.get('dwellers')),
+                numberOfFlats: 1,
+                openSpaceArea: 100,
+                roofType: formData.get('roofType'),
+                roofArea: parseFloat(formData.get('roofArea'))
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/api/projects', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('Success! Project ID: ' + result.project._id);
+                    window.location.href = `http://localhost:3000/dashboard/${result.project._id}`;
+                } else {
+                    alert('Error: ' + response.status);
+                }
+            } catch (error) {
+                alert('Network Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -200,32 +200,33 @@ const Form = () => {
   const handleCalculate = async (e) => {
     console.log('🚀 handleCalculate function called');
     e.preventDefault();
-    console.log('🚀 Form submitted! Calculating water potential with data:', formData);
+    
+    console.log('🚀 Form data:', formData);
     
     // Validate required fields
     if (!formData.location || !formData.roofArea || !formData.residenceType || !formData.roofType || !formData.dwellers) {
-      alert('Please fill in all required fields');
+      alert('Please fill in all required fields: location, roof area, residence type, roof type, and number of dwellers');
       return;
     }
     
+    setIsSubmitting(true);
+    
     try {
-      setIsSubmitting(true);
-      
       // Prepare data for backend API
       const projectData = {
         name: `${formData.location} Assessment`,
         location: formData.location,
         residenceType: formData.residenceType,
-        numberOfDwellers: parseInt(formData.dwellers),
-        numberOfFlats: formData.residenceType === 'apartment_building' ? parseInt(formData.dwellers) : 1,
-        openSpaceArea: parseFloat(formData.openSpaceLength) * parseFloat(formData.openSpaceBreadth) || 0,
+        numberOfDwellers: parseInt(formData.dwellers) || 4,
+        numberOfFlats: 1,
+        openSpaceArea: parseFloat(formData.openSpaceLength) * parseFloat(formData.openSpaceBreadth) || 100,
         roofType: formData.roofType,
-        roofArea: parseFloat(formData.roofArea)
+        roofArea: parseFloat(formData.roofArea) || 50
       };
 
       console.log('Submitting project data:', projectData);
 
-      // Submit to backend API
+      // Use proxy URL
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
@@ -234,9 +235,10 @@ const Form = () => {
         body: JSON.stringify(projectData)
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit project data');
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -246,7 +248,7 @@ const Form = () => {
       navigate(`/dashboard/${result.project._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert(`Error submitting form: ${error.message}. Please try again.`);
+      alert(`Error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -432,12 +434,9 @@ const Form = () => {
           {/* C. Call to Action Button */}
           <div className="col-span-1 md:col-span-2 mt-4">
             <button
-              type="submit"
+              type="button"
               disabled={isSubmitting}
-              onClick={(e) => {
-                console.log('🔥 Button clicked!');
-                // Don't prevent default here, let the form handle it
-              }}
+              onClick={handleCalculate}
               className={`w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-lg text-lg font-bold rounded-full text-white transition-all duration-200 transform ${
                 isSubmitting 
                   ? 'bg-gray-400 cursor-not-allowed' 
