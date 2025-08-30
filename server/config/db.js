@@ -7,11 +7,8 @@ const connectDB = async () => {
       process.exit(1);
     }
 
-    // Use mongoose.connect with options
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    // Use mongoose.connect
+    await mongoose.connect(process.env.MONGO_URI);
 
     console.log("✅ MongoDB Atlas connected successfully");
   } catch (error) {

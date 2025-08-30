@@ -20,6 +20,7 @@ const Form = () => {
   });
 
   const [isEnglish, setIsEnglish] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation(); // Ab yeh kaam karega
 
@@ -178,11 +179,58 @@ const Form = () => {
     }
   };
 
-  const handleCalculate = (e) => {
+  const handleCalculate = async (e) => {
     e.preventDefault();
     console.log('Calculating water potential with data:', formData);
-    // This is a placeholder for your backend API call
-    navigate('/dashboard');
+    
+    // Validate required fields
+    if (!formData.location || !formData.roofArea || !formData.residenceType || !formData.roofType || !formData.dwellers) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Prepare data for backend API
+      const projectData = {
+        name: `${formData.location} Assessment`,
+        location: formData.location,
+        residenceType: formData.residenceType,
+        numberOfDwellers: parseInt(formData.dwellers),
+        numberOfFlats: formData.residenceType === 'apartment_building' ? parseInt(formData.dwellers) : 1,
+        openSpaceArea: parseFloat(formData.openSpaceLength) * parseFloat(formData.openSpaceBreadth) || 0,
+        roofType: formData.roofType,
+        roofArea: parseFloat(formData.roofArea)
+      };
+
+      console.log('Submitting project data:', projectData);
+
+      // Submit to backend API
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit project data');
+      }
+
+      const result = await response.json();
+      console.log('Project created successfully:', result);
+
+      // Navigate to dashboard with project ID
+      navigate(`/dashboard/${result.project._id}`);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert(`Error submitting form: ${error.message}. Please try again.`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSatelliteClick = () => {
@@ -363,12 +411,19 @@ const Form = () => {
           />
 
           {/* C. Call to Action Button */}
-          {/* <SubmitButton label={content.calculateButton} /> */}
-        
-<SubmitButton 
-  label={content.calculateButton} 
-  className="bg-[#2c7da0] hover:bg-[#1a5c7b] text-white"
-/>
+          <div className="col-span-1 md:col-span-2 mt-4">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-lg text-lg font-bold rounded-full text-white transition-all duration-200 transform ${
+                isSubmitting 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 hover:scale-105'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500`}
+            >
+              {isSubmitting ? 'Calculating...' : content.calculateButton}
+            </button>
+          </div>
 
 
         </form>
