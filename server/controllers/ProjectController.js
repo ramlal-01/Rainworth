@@ -21,7 +21,19 @@ export const createProject = async (req, res) => {
 
     // 2️⃣ Fetch coordinates & rainfall
     const coords = await getCoordinates(location, process.env.OPENWEATHERMAP_API_KEY);
+    if (!coords) {
+      return res.status(400).json({ 
+        message: "Location not found", 
+        error: "Unable to find coordinates for the specified location. Please check the location name and try again." 
+      });
+    }
     const monthlyRainfall = await getMonthlyRainfall(coords.lat, coords.lon);
+    if (!monthlyRainfall) {
+      return res.status(500).json({ 
+        message: "Weather data unavailable", 
+        error: "Unable to fetch rainfall data for the specified location. Please try again later." 
+      });
+    }
 
     // 3️⃣ Calculate harvest, consumption, surplus
     const { monthlyHarvest, annualHarvest, runoffCoeff } = calculateHarvest(monthlyRainfall, roofArea, roofType);

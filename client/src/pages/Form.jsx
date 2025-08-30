@@ -230,8 +230,18 @@ const Form = () => {
         body: JSON.stringify(projectData)
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        console.log('Error response body:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { message: errorText };
+        }
         throw new Error(errorData.message || 'Failed to submit project data');
       }
 
@@ -242,7 +252,12 @@ const Form = () => {
       navigate(`/dashboard/${result.project._id}`);
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert(`Error submitting form: ${error.message}. Please try again.`);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      alert(`Error submitting form: ${error.message}. Please check the console for more details.`);
     } finally {
       setIsSubmitting(false);
     }
