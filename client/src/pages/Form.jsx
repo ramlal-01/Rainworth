@@ -192,15 +192,30 @@ const Form = () => {
     try {
       setIsSubmitting(true);
       
+      // Map frontend values to backend expected enum values
+      const residenceTypeMapping = {
+        'house': 'Independent House',
+        'apartment_individual': 'Apartment',
+        'apartment_building': 'Apartment',
+        'colony': 'Colony',
+        'ngo_govt': 'Colony' // Map to closest available option
+      };
+
+      const roofTypeMapping = {
+        'concrete': 'Concrete',
+        'tile': 'Tile',
+        'sheet': 'Sheet'
+      };
+
       // Prepare data for backend API
       const projectData = {
         name: `${formData.location} Assessment`,
         location: formData.location,
-        residenceType: formData.residenceType,
+        residenceType: residenceTypeMapping[formData.residenceType] || formData.residenceType,
         numberOfDwellers: parseInt(formData.dwellers),
         numberOfFlats: formData.residenceType === 'apartment_building' ? parseInt(formData.dwellers) : 1,
         openSpaceArea: parseFloat(formData.openSpaceLength) * parseFloat(formData.openSpaceBreadth) || 0,
-        roofType: formData.roofType,
+        roofType: roofTypeMapping[formData.roofType] || formData.roofType,
         roofArea: parseFloat(formData.roofArea)
       };
 
