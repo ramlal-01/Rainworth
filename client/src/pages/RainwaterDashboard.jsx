@@ -1,5 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -22,11 +26,13 @@ ChartJS.register(
 
 const RainwaterDashboard = () => {
   const [data, setData] = useState(null);
+  const [projectInputs, setProjectInputs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloadLoading, setDownloadLoading] = useState(false);
   const { projectId } = useParams();
   const statCardsRef = useRef([]);
+
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -62,6 +68,19 @@ const RainwaterDashboard = () => {
             demandData: [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15],
             surplusData: [2.6, -2.2, -4.6, -9.4, 0.2, 69, 237, 225, 141, 10.6, -11, -8.6]
           });
+          
+          // Demo project inputs for PDF
+          setProjectInputs({
+            name: 'Demo Rainwater Harvesting Project',
+            location: 'Demo Location, Mumbai',
+            residenceType: 'Independent House',
+            numberOfDwellers: 4,
+            numberOfFlats: 1,
+            openSpaceArea: 100,
+            roofType: 'Concrete',
+            roofArea: 150
+          });
+          
           setLoading(false);
           return;
         }
@@ -72,6 +91,21 @@ const RainwaterDashboard = () => {
           throw new Error('Failed to fetch project details');
         }
         const project = await projectResponse.json();
+        
+        // Store project inputs for PDF
+        setProjectInputs({
+          name: project.name,
+          location: project.location,
+          residenceType: project.residenceType === 'house' ? 'Independent House' : 
+                        project.residenceType === 'apartment_individual' ? 'Apartment (Individual)' :
+                        project.residenceType === 'apartment_building' ? 'Apartment (Building)' :
+                        project.residenceType,
+          numberOfDwellers: project.numberOfDwellers,
+          numberOfFlats: project.numberOfFlats,
+          openSpaceArea: project.openSpaceArea,
+          roofType: project.roofType,
+          roofArea: project.roofArea
+        });
 
         // Fetch calculation data
         const calcResponse = await fetch(`/api/projects/${projectId}/calculation`);
@@ -133,44 +167,251 @@ const RainwaterDashboard = () => {
     fetchProjectData();
   }, [projectId]);
 
-  // Download report function
+  // Generate and download PDF report
   const handleDownloadReport = async () => {
-    if (!projectId) {
-      alert('Report download is not available for demo data. Please create a project first.');
+    if (!data || !projectInputs) {
+      alert('Please wait for data to load completely before downloading the report.');
       return;
     }
 
     try {
       setDownloadLoading(true);
-      const response = await fetch(`/api/reports/${projectId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      
+      // Create PDF document
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let yPosition = 20;
+
+      // Helper function to check if we need a new page
+      const checkPageBreak = (requiredSpace) => {
+        if (yPosition + requiredSpace > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+      };
+
+      // 1. HEADER SECTION
+      pdf.setFillColor(59, 130, 246); // Blue color
+      pdf.rect(0, 0, pageWidth, 35, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(22);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Rainwater Harvesting Analysis Report', 20, 22);
+      
+      pdf.setFontSize(12);
+      pdf.setFont(undefined, 'normal');
+      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
+      
+      yPosition = 50;
+
+      // 2. PROJECT INPUT DATA SECTION
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(18);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Project Input Information', 20, yPosition);
+      yPosition += 8;
+
+      // Draw line under heading
+      pdf.setDrawColor(59, 130, 246);
+      pdf.setLineWidth(0.8);
+      pdf.line(20, yPosition, pageWidth - 20, yPosition);
+      yPosition += 15;
+
+      // Input data table
+      const inputData = [
+        ['Project Name:', projectInputs.name],
+        ['Location:', projectInputs.location],
+        ['Residence Type:', projectInputs.residenceType],
+        ['Number of Dwellers:', projectInputs.numberOfDwellers.toString()],
+        ['Number of Flats:', projectInputs.numberOfFlats.toString()],
+        ['Open Space Area:', `${projectInputs.openSpaceArea} m²`],
+        ['Roof Type:', projectInputs.roofType],
+        ['Roof Area:', `${projectInputs.roofArea} m²`]
+      ];
+
+      pdf.setFontSize(12);
+      inputData.forEach(([label, value]) => {
+        checkPageBreak(10);
+        pdf.setFont(undefined, 'bold');
+        pdf.text(label, 25, yPosition);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(value, 90, yPosition);
+        yPosition += 8;
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate report');
+      yPosition += 15;
+
+      // 3. ANALYSIS RESULTS SECTION
+      checkPageBreak(25);
+      pdf.setFontSize(18);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Analysis Results & Output', 20, yPosition);
+      yPosition += 8;
+
+      pdf.setDrawColor(59, 130, 246);
+      pdf.line(20, yPosition, pageWidth - 20, yPosition);
+      yPosition += 15;
+
+      // Key Statistics
+      pdf.setFontSize(16);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Key Statistics', 25, yPosition);
+      yPosition += 12;
+
+      const keyStats = [
+        ['Total Water Harvested (Annual):', `${data.stats.totalHarvested.toLocaleString()} L`],
+        ['Per Person Water Potential:', `${data.stats.perPersonPotential.toLocaleString()} L/year`],
+        ['Water Sustainability:', `${data.stats.sustainability} months/year`],
+        ['Annual Water Requirement:', `${data.stats.annualRequirement.toLocaleString()} L`],
+        ['Recommended Tank Size:', `${data.stats.tankSize.toLocaleString()} L`],
+        ['Water Storage Capacity:', `${Math.round(data.stats.waterStored).toLocaleString()} L`],
+        ['Recharge Pits Required:', `${data.stats.rechargePits} pits`]
+      ];
+
+      pdf.setFontSize(11);
+      keyStats.forEach(([label, value]) => {
+        checkPageBreak(8);
+        pdf.setFont(undefined, 'bold');
+        pdf.text(label, 30, yPosition);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(value, 130, yPosition);
+        yPosition += 7;
+      });
+
+      yPosition += 15;
+
+      // Cost Analysis
+      checkPageBreak(30);
+      pdf.setFontSize(16);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Cost Analysis', 25, yPosition);
+      yPosition += 12;
+
+      const costData = [
+        ['Tank & Installation:', `₹${data.costBreakdown.tankInstallation.toLocaleString()}`],
+        ['Filtration System:', `₹${data.costBreakdown.filtration.toLocaleString()}`],
+        ['Piping & Labor:', `₹${data.costBreakdown.pipingLabor.toLocaleString()}`],
+        ['Payback Period:', `${data.costBreakdown.paybackPeriod} years`]
+      ];
+
+      pdf.setFontSize(11);
+      costData.forEach(([label, value]) => {
+        checkPageBreak(8);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(label, 30, yPosition);
+        pdf.text(value, 130, yPosition);
+        yPosition += 7;
+      });
+
+      // Total cost with highlight
+      checkPageBreak(15);
+      yPosition += 3;
+      pdf.setDrawColor(0, 0, 0);
+      pdf.line(30, yPosition, 170, yPosition);
+      yPosition += 8;
+      
+      pdf.setFont(undefined, 'bold');
+      pdf.setFontSize(13);
+      pdf.text('Total Estimated Cost:', 30, yPosition);
+      pdf.setTextColor(59, 130, 246);
+      pdf.text(`₹${data.stats.cost.toLocaleString()}`, 130, yPosition);
+      pdf.setTextColor(0, 0, 0);
+      yPosition += 15;
+
+      // 4. MONTHLY ANALYSIS TABLE
+      checkPageBreak(100);
+      pdf.setFontSize(16);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Monthly Water Analysis', 25, yPosition);
+      yPosition += 15;
+
+      // Table headers
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'bold');
+      const headers = ['Month', 'Rainfall', 'Harvest', 'Demand', 'Surplus'];
+      const colWidths = [25, 30, 30, 30, 30];
+      const colPositions = [25, 50, 80, 110, 140];
+      
+      headers.forEach((header, i) => {
+        pdf.text(header, colPositions[i], yPosition);
+      });
+      
+      yPosition += 3;
+      pdf.line(25, yPosition, 170, yPosition);
+      yPosition += 8;
+
+      // Table data
+      pdf.setFont(undefined, 'normal');
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      months.forEach((month, index) => {
+        checkPageBreak(8);
+        const rowData = [
+          month,
+          `${data.rainfallData[index]?.toFixed(1) || '0'} mm`,
+          `${Math.round(data.harvestedData[index] || 0).toLocaleString()} L`,
+          `${Math.round(data.demandData[index] || 0).toLocaleString()} L`,
+          `${Math.round(data.surplusData[index] || 0).toLocaleString()} L`
+        ];
+        
+        rowData.forEach((cell, i) => {
+          pdf.text(cell, colPositions[i], yPosition);
+        });
+        yPosition += 6;
+      });
+
+      yPosition += 15;
+
+      // 5. SUMMARY & RECOMMENDATIONS
+      checkPageBreak(40);
+      pdf.setFontSize(16);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Summary & Recommendations', 25, yPosition);
+      yPosition += 8;
+
+      pdf.setDrawColor(59, 130, 246);
+      pdf.line(25, yPosition, pageWidth - 20, yPosition);
+      yPosition += 12;
+
+      const recommendations = [
+        `• Your property can harvest approximately ${data.stats.totalHarvested.toLocaleString()} liters of water annually.`,
+        `• This system can meet your water needs for ${data.stats.sustainability} months per year.`,
+        `• Recommended tank capacity: ${data.stats.tankSize.toLocaleString()} liters with ${data.stats.rechargePits} recharge pits.`,
+        `• Total investment required: ₹${data.stats.cost.toLocaleString()} with payback in ${data.costBreakdown.paybackPeriod} years.`,
+        `• This system will provide ${data.stats.perPersonPotential.toLocaleString()} liters per person annually.`
+      ];
+
+      pdf.setFontSize(11);
+      pdf.setFont(undefined, 'normal');
+      recommendations.forEach(text => {
+        checkPageBreak(15);
+        const lines = pdf.splitTextToSize(text, pageWidth - 60);
+        pdf.text(lines, 30, yPosition);
+        yPosition += lines.length * 6 + 3;
+      });
+
+      // 6. FOOTER
+      const totalPages = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(9);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 30, pageHeight - 10);
+        pdf.text('RainWorth - Rainwater Harvesting Analysis Tool', 20, pageHeight - 10);
       }
 
-      // Create blob from response
-      const blob = await response.blob();
+      // Save the PDF
+      const fileName = projectId ? 
+        `rainwater-report-${projectId.slice(-6)}.pdf` : 
+        'rainwater-demo-report.pdf';
       
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `rainwater-report-${projectId.slice(-6)}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      
-      // Cleanup
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
+      pdf.save(fileName);
+
     } catch (error) {
-      console.error('Error downloading report:', error);
-      alert('Failed to download report. Please try again.');
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF report. Please try again.');
     } finally {
       setDownloadLoading(false);
     }
