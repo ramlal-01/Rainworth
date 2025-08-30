@@ -1,5 +1,5 @@
 import express from "express";
-import { createProject, getAllProjects, getProjectCalculation } from "../controllers/ProjectController.js";
+import { createProject, getAllProjects, getProject, getProjectCalculation } from "../controllers/ProjectController.js";
 
 const router = express.Router();
 
@@ -8,6 +8,9 @@ router.post("/", createProject);
 
 // Get all projects
 router.get("/", getAllProjects);
+
+// Get individual project
+router.get("/:projectId", getProject);
 
 // Get calculation of a project
 router.get("/:projectId/calculation", getProjectCalculation);

@@ -20,8 +20,27 @@ const Form = () => {
   });
 
   const [isEnglish, setIsEnglish] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation(); // Ab yeh kaam karega
+
+  // Test API connection on component mount
+  useEffect(() => {
+    const testAPI = async () => {
+      try {
+        console.log('🧪 Testing API connection...');
+        const response = await fetch('/api/projects');
+        if (response.ok) {
+          console.log('✅ API connection successful');
+        } else {
+          console.log('❌ API connection failed:', response.status);
+        }
+      } catch (error) {
+        console.log('❌ API connection error:', error);
+      }
+    };
+    testAPI();
+  }, []);
 
   // Hardcoded language content for demonstration
   const langContent = {
@@ -178,11 +197,61 @@ const Form = () => {
     }
   };
 
-  const handleCalculate = (e) => {
+  const handleCalculate = async (e) => {
+    console.log('🚀 handleCalculate function called');
     e.preventDefault();
-    console.log('Calculating water potential with data:', formData);
-    // This is a placeholder for your backend API call
-    navigate('/dashboard');
+    
+    console.log('🚀 Form data:', formData);
+    
+    // Validate required fields
+    if (!formData.location || !formData.roofArea || !formData.residenceType || !formData.roofType || !formData.dwellers) {
+      alert('Please fill in all required fields: location, roof area, residence type, roof type, and number of dwellers');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Prepare data for backend API
+      const projectData = {
+        name: `${formData.location} Assessment`,
+        location: formData.location,
+        residenceType: formData.residenceType,
+        numberOfDwellers: parseInt(formData.dwellers) || 4,
+        numberOfFlats: 1,
+        openSpaceArea: parseFloat(formData.openSpaceLength) * parseFloat(formData.openSpaceBreadth) || 100,
+        roofType: formData.roofType,
+        roofArea: parseFloat(formData.roofArea) || 50
+      };
+
+      console.log('Submitting project data:', projectData);
+
+      // Use proxy URL
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('Project created successfully:', result);
+
+      // Navigate to dashboard with project ID
+      navigate(`/dashboard/${result.project._id}`);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSatelliteClick = () => {
@@ -363,12 +432,20 @@ const Form = () => {
           />
 
           {/* C. Call to Action Button */}
-          {/* <SubmitButton label={content.calculateButton} /> */}
-        
-<SubmitButton 
-  label={content.calculateButton} 
-  className="bg-[#2c7da0] hover:bg-[#1a5c7b] text-white"
-/>
+          <div className="col-span-1 md:col-span-2 mt-4">
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleCalculate}
+              className={`w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-lg text-lg font-bold rounded-full text-white transition-all duration-200 transform ${
+                isSubmitting 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 hover:scale-105'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500`}
+            >
+              {isSubmitting ? 'Calculating...' : content.calculateButton}
+            </button>
+          </div>
 
 
         </form>

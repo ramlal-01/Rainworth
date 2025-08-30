@@ -1,40 +1,136 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const RainwaterDashboard = () => {
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { projectId } = useParams();
   const statCardsRef = useRef([]);
 
   useEffect(() => {
-    // Simulate data loading
-    setTimeout(() => {
-      setData({
-        location: 'Bharthia, Uttar Pradesh',
-        reportDate: 'June 12, 2023',
-        reportId: 'RH-2023-06-789',
-        sustainability: 9.6,
-        stats: {
-          totalHarvested: 145000,
-          perPersonPotential: 36250,
-          sustainability: 9.6,
-          annualRequirement: 180000,
-          tankSize: 5000,
-          cost: 75000,
-          roofType: 'Concrete',
-          waterStored: 4800,
-          rechargePits: 2
-        },
-        costBreakdown: {
-          tankInstallation: 45000,
-          filtration: 15000,
-          pipingLabor: 15000,
-          paybackPeriod: 3.5
-        },
-        rainfallData: [22, 16, 13, 7, 19, 105, 315, 300, 195, 32, 5, 8],
-        harvestedData: [17.6, 12.8, 10.4, 5.6, 15.2, 84, 252, 240, 156, 25.6, 4, 6.4],
-        demandData: [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15]
-      });
-    }, 1000);
-  }, []);
+    const fetchProjectData = async () => {
+      try {
+        setLoading(true);
+        
+        if (!projectId) {
+          // If no projectId, show demo data
+          setData({
+            location: 'Demo Location',
+            reportDate: new Date().toLocaleDateString(),
+            reportId: 'DEMO-001',
+            sustainability: 9.6,
+            stats: {
+              totalHarvested: 145000,
+              perPersonPotential: 36250,
+              sustainability: 9.6,
+              annualRequirement: 180000,
+              tankSize: 5000,
+              cost: 75000,
+              roofType: 'Concrete',
+              waterStored: 4800,
+              rechargePits: 2
+            },
+            costBreakdown: {
+              tankInstallation: 45000,
+              filtration: 15000,
+              pipingLabor: 15000,
+              paybackPeriod: 3.5
+            },
+            rainfallData: [22, 16, 13, 7, 19, 105, 315, 300, 195, 32, 5, 8],
+            harvestedData: [17.6, 12.8, 10.4, 5.6, 15.2, 84, 252, 240, 156, 25.6, 4, 6.4],
+            demandData: [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15],
+            surplusData: [2.6, -2.2, -4.6, -9.4, 0.2, 69, 237, 225, 141, 10.6, -11, -8.6]
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Fetch project details
+        const projectResponse = await fetch(`/api/projects/${projectId}`);
+        if (!projectResponse.ok) {
+          throw new Error('Failed to fetch project details');
+        }
+        const project = await projectResponse.json();
+
+        // Fetch calculation data
+        const calcResponse = await fetch(`/api/projects/${projectId}/calculation`);
+        if (!calcResponse.ok) {
+          throw new Error('Failed to fetch calculation data');
+        }
+        const calculation = await calcResponse.json();
+
+        // Transform data for dashboard
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        
+        // Handle MongoDB Map objects - convert to regular objects if needed
+        const rainfallMap = calculation.monthlyRainfall instanceof Map ? Object.fromEntries(calculation.monthlyRainfall) : calculation.monthlyRainfall;
+        const harvestMap = calculation.monthlyHarvest instanceof Map ? Object.fromEntries(calculation.monthlyHarvest) : calculation.monthlyHarvest;
+        const consumptionMap = calculation.monthlyConsumption instanceof Map ? Object.fromEntries(calculation.monthlyConsumption) : calculation.monthlyConsumption;
+        const surplusMap = calculation.monthlySurplus instanceof Map ? Object.fromEntries(calculation.monthlySurplus) : calculation.monthlySurplus;
+        
+        const rainfallData = months.map(month => rainfallMap[month] || 0);
+        const harvestedData = months.map(month => harvestMap[month] || 0);
+        const demandData = months.map(month => consumptionMap[month] || 0);
+        const surplusData = months.map(month => surplusMap[month] || 0);
+
+        setData({
+          location: project.location,
+          reportDate: new Date().toLocaleDateString(),
+          reportId: `RH-${projectId.slice(-6)}`,
+          sustainability: ((calculation.annualHarvest / calculation.annualConsumption) * 10).toFixed(1),
+          stats: {
+            totalHarvested: Math.round(calculation.annualHarvest),
+            perPersonPotential: Math.round(calculation.annualHarvest / project.numberOfDwellers),
+            sustainability: ((calculation.annualHarvest / calculation.annualConsumption) * 10).toFixed(1),
+            annualRequirement: Math.round(calculation.annualConsumption),
+            tankSize: 5000,
+            cost: calculation.structureCost,
+            roofType: project.roofType,
+            waterStored: Math.min(5000, calculation.annualHarvest),
+            rechargePits: calculation.rechargeFrequency
+          },
+          costBreakdown: {
+            tankInstallation: Math.round(calculation.structureCost * 0.6),
+            filtration: Math.round(calculation.structureCost * 0.2),
+            pipingLabor: Math.round(calculation.structureCost * 0.2),
+            paybackPeriod: (calculation.structureCost / (calculation.annualHarvest * 0.05)).toFixed(1)
+          },
+          rainfallData,
+          harvestedData,
+          demandData,
+          surplusData
+        });
+
+      } catch (err) {
+        console.error('Error fetching project data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjectData();
+  }, [projectId]);
 
   useEffect(() => {
     if (data) {
@@ -73,7 +169,7 @@ const RainwaterDashboard = () => {
     }
   }, [data]);
 
-  if (!data) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
         <div className="text-center">
@@ -83,6 +179,128 @@ const RainwaterDashboard = () => {
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-semibold mt-4 text-gray-600">Error Loading Dashboard</h2>
+          <p className="text-gray-500 mt-2">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  // Chart data preparation
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Chart 1: Rainfall vs Harvest
+  const rainfallHarvestChartData = {
+    labels: months,
+    datasets: [
+      {
+        label: 'Rainfall (mm)',
+        data: data.rainfallData,
+        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Harvest (L)',
+        data: data.harvestedData,
+        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+        borderColor: 'rgba(16, 185, 129, 1)',
+        borderWidth: 1,
+        yAxisID: 'y1',
+      },
+    ],
+  };
+
+  // Chart 2: Consumption vs Surplus
+  const consumeSurplusChartData = {
+    labels: months,
+    datasets: [
+      {
+        label: 'Consumption (L)',
+        data: data.demandData,
+        backgroundColor: 'rgba(239, 68, 68, 0.6)',
+        borderColor: 'rgba(239, 68, 68, 1)',
+        borderWidth: 1,
+      },
+      {
+        label: 'Surplus (L)',
+        data: data.surplusData,
+        backgroundColor: 'rgba(34, 197, 94, 0.6)',
+        borderColor: 'rgba(34, 197, 94, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const chartOptions1 = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Monthly Rainfall vs Water Harvest',
+      },
+    },
+    scales: {
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        title: {
+          display: true,
+          text: 'Rainfall (mm)',
+        },
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        title: {
+          display: true,
+          text: 'Harvest (L)',
+        },
+        grid: {
+          drawOnChartArea: false,
+        },
+      },
+    },
+  };
+
+  const chartOptions2 = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Monthly Water Consumption vs Surplus',
+      },
+    },
+    scales: {
+      y: {
+        title: {
+          display: true,
+          text: 'Water (L)',
+        },
+      },
+    },
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 font-sans">
@@ -115,7 +333,7 @@ const RainwaterDashboard = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
               <h2 className="text-xl font-semibold text-gray-800">{data.location}</h2>
-              <p className="text-gray-500">Residential Property • Concrete Roof • 4 Dwellers</p>
+              <p className="text-gray-500">Residential Property • {data.stats.roofType} Roof • {data.stats.totalHarvested > 0 ? Math.round(data.stats.totalHarvested / data.stats.perPersonPotential) : 'N/A'} Dwellers</p>
             </div>
             <div className="mt-4 md:mt-0">
               <div className="flex items-center space-x-2">
@@ -219,7 +437,7 @@ const RainwaterDashboard = () => {
               </div>
             </div>
             <div className="h-80">
-              <canvas id="rainfallChart"></canvas>
+              <Bar data={rainfallHarvestChartData} options={chartOptions1} />
             </div>
           </div>
           
@@ -235,7 +453,7 @@ const RainwaterDashboard = () => {
               </div>
             </div>
             <div className="h-80">
-              <canvas id="demandSupplyChart"></canvas>
+              <Bar data={consumeSurplusChartData} options={chartOptions2} />
             </div>
           </div>
         </div>
@@ -248,26 +466,26 @@ const RainwaterDashboard = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Tank & Installation</span>
-                <span className="font-medium text-gray-800">₹45,000</span>
+                <span className="font-medium text-gray-800">₹{data.costBreakdown.tankInstallation.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Filtration System</span>
-                <span className="font-medium text-gray-800">₹15,000</span>
+                <span className="font-medium text-gray-800">₹{data.costBreakdown.filtration.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Piping & Labor</span>
-                <span className="font-medium text-gray-800">₹15,000</span>
+                <span className="font-medium text-gray-800">₹{data.costBreakdown.pipingLabor.toLocaleString()}</span>
               </div>
               <div className="h-px bg-gray-200 my-4"></div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-800 font-semibold">Total Estimated Cost</span>
-                <span className="font-bold text-blue-600">₹75,000</span>
+                <span className="font-bold text-blue-600">₹{data.stats.cost.toLocaleString()}</span>
               </div>
             </div>
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-gray-600">Payback Period</span>
-                <span className="font-medium text-gray-800">~3.5 years</span>
+                <span className="font-medium text-gray-800">~{data.costBreakdown.paybackPeriod} years</span>
               </div>
               <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
                 <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-300" style={{ width: '65%' }}></div>
@@ -286,7 +504,7 @@ const RainwaterDashboard = () => {
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-700">Roof Type</h4>
-                    <p className="text-sm text-gray-500">Concrete</p>
+                    <p className="text-sm text-gray-500">{data.stats.roofType}</p>
                   </div>
                 </div>
               </div>
@@ -297,7 +515,7 @@ const RainwaterDashboard = () => {
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-700">Water Stored</h4>
-                    <p className="text-sm text-gray-500">4,800 liters</p>
+                    <p className="text-sm text-gray-500">{Math.round(data.stats.waterStored).toLocaleString()} liters</p>
                   </div>
                 </div>
               </div>
@@ -308,7 +526,7 @@ const RainwaterDashboard = () => {
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-700">Recharge Pits</h4>
-                    <p className="text-sm text-gray-500">2 pits</p>
+                    <p className="text-sm text-gray-500">{data.stats.rechargePits} pits</p>
                   </div>
                 </div>
               </div>
