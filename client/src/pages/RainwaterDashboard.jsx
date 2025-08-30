@@ -24,6 +24,7 @@ const RainwaterDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloadLoading, setDownloadLoading] = useState(false);
   const { projectId } = useParams();
   const statCardsRef = useRef([]);
 
@@ -131,6 +132,49 @@ const RainwaterDashboard = () => {
 
     fetchProjectData();
   }, [projectId]);
+
+  // Download report function
+  const handleDownloadReport = async () => {
+    if (!projectId) {
+      alert('Report download is not available for demo data. Please create a project first.');
+      return;
+    }
+
+    try {
+      setDownloadLoading(true);
+      const response = await fetch(`/api/reports/${projectId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report');
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `rainwater-report-${projectId.slice(-6)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      alert('Failed to download report. Please try again.');
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (data) {
@@ -537,9 +581,22 @@ const RainwaterDashboard = () => {
           <div className="bg-white rounded-2xl shadow-md p-6 lg:col-span-1">
             <h3 className="text-lg font-semibold text-gray-800 mb-6">Actions</h3>
             <div className="space-y-4">
-              <button className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 text-white font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
-                <i className="fas fa-download"></i>
-                <span>Download Full Report</span>
+              <button 
+                onClick={handleDownloadReport}
+                disabled={downloadLoading}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 text-white font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {downloadLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Generating Report...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-download"></i>
+                    <span>Download Full Report</span>
+                  </>
+                )}
               </button>
               <button className="w-full py-3 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <i className="fas fa-share-alt"></i>
