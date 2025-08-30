@@ -839,18 +839,18 @@ const RainwaterDashboard = () => {
                   </>
                 )}
               </button>
-              <button className="w-full py-3 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+              {/* <button className="w-full py-3 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <i className="fas fa-share-alt"></i>
                 <span>Share Results</span>
-              </button>
+              </button> */}
               <button className="w-full py-3 rounded-xl bg-gray-100 text-gray-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <i className="fas fa-edit"></i>
                 <span>Modify Inputs</span>
               </button>
-              <button className="w-full py-3 rounded-xl bg-green-100 text-green-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+              {/* <button className="w-full py-3 rounded-xl bg-green-100 text-green-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
                 <i className="fas fa-user-tie"></i>
                 <span>Contact Expert</span>
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
