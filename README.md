@@ -104,7 +104,7 @@ d) Research & Documentation Lead(Nandini Gupta) – Collected data , prepared re
 
 e) UI/UX Designer(Remanshu Goyal) – Designed landing page layouts, and improved user experience for the dashboard.
 
-f) Testing & Deployment Engineer(Ramlal) – Tested the system for bugs, optimized performance, and deployed project on hosting platforms.
+f) Testing & Deployment Engineer(Pranav kumar Sharma) – Built the calculator of rooftop area via all possible polygons using Google Map APIs & mapPage using react+vite , worked with Google Cloud console for Google Map APIs
 
 📜 License
 
