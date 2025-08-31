@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams , useNavigate} from 'react-router-dom';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -25,6 +25,7 @@ ChartJS.register(
 );
 
 const RainwaterDashboard = () => {
+   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [projectInputs, setProjectInputs] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -602,12 +603,14 @@ const RainwaterDashboard = () => {
           </div>
         </div>
         <nav className="flex items-center space-x-6">
-          <a href="#" className="text-gray-600 hover:text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">Dashboard</a>
-          <a href="#" className="text-gray-600 hover:text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">Reports</a>
-          <a href="#" className="text-gray-600 hover:text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">Settings</a>
-          <button className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium flex items-center space-x-2">
+          {/* <a href="#" className="text-gray-600 hover:text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">Home</a> */}
+          {/* <a href="#" className="text-gray-600 hover:text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full"></a>
+          <a href="#" className="text-gray-600 hover:text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-500 after:transition-all after:duration-300 hover:after:w-full">Settings</a> */}
+          <button 
+          onClick={() => navigate('/')}
+          className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium flex items-center space-x-2">
             <i className="fas fa-user-circle"></i>
-            <span>Account</span>
+            <span>Home</span>
           </button>
         </nav>
       </header>
@@ -633,7 +636,7 @@ const RainwaterDashboard = () => {
           </div>
           
           {/* Sustainability Progress */}
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <div className="flex justify-between items-center mb-2">
               <span className="text-gray-700 font-medium">Water Sustainability</span>
               <span className="text-blue-600 font-bold">{data.sustainability} months/year</span>
@@ -642,7 +645,7 @@ const RainwaterDashboard = () => {
               <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-300" style={{ width: '80%' }}></div>
             </div>
             <p className="text-sm text-gray-500 mt-2">Your rainwater harvesting system can cover 80% of your annual water needs</p>
-          </div>
+          </div> */}
         </div>
 
         {/* Stats Grid */}
@@ -843,7 +846,10 @@ const RainwaterDashboard = () => {
                 <i className="fas fa-share-alt"></i>
                 <span>Share Results</span>
               </button> */}
-              <button className="w-full py-3 rounded-xl bg-gray-100 text-gray-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+              <button 
+                onClick={() => navigate('/form')}
+                className="w-full py-3 rounded-xl bg-gray-100 text-gray-700 font-medium flex items-center justify-center space-x-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:bg-gray-200"
+              >
                 <i className="fas fa-edit"></i>
                 <span>Modify Inputs</span>
               </button>
@@ -866,5 +872,4 @@ const RainwaterDashboard = () => {
 };
 
 export default RainwaterDashboard;
-
-// abcefgfh
+ 
