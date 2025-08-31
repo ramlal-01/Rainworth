@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const sectionRefs = useRef([]);
   const navigate = useNavigate();
 
@@ -50,8 +51,29 @@ export default function LandingPage() {
     return () => observer.disconnect();
   }, []);
 
+  // Scroll to top functionality
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   return (
-    <div className="scroll-smooth text-gray-800 bg-gradient-to-br from-blue-50 via-white to-green-50 font-['Inter'] overflow-x-hidden">
+    <div className="scroll-smooth text-gray-800 bg-gradient-to-br from-blue-50 via-white to-green-50 font-['Inter'] overflow-x-hidden pt-20">
       {/* Background Animations */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute bottom-0 left-0 right-0 h-48 wave-container">
@@ -67,7 +89,7 @@ export default function LandingPage() {
       </div>
 
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40 border-b border-gray-200/50">
+      <header className="bg-white/95 backdrop-blur-xl shadow-xl fixed top-0 left-0 right-0 z-50 border-b border-gray-200/50">
         <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
           <a href="#home" className="flex items-center space-x-2 group">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
@@ -244,8 +266,23 @@ export default function LandingPage() {
         </div>
       </footer>
       
-      {/* Assessment Modal Trigger */}
-      
+             {/* Assessment Modal Trigger */}
+       
+               {/* Scroll to Top Button */}
+        <button
+          onClick={scrollToTop}
+          className={`fixed bottom-8 right-8 bg-white text-black p-3 rounded-full shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-110 z-50 border border-gray-200 ${
+            showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
+          }`}
+          aria-label="Scroll to top"
+        >
+          <div className="flex flex-col items-center">
+            <svg className="w-4 h-4 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+            <span className="text-xs font-semibold">TOP</span>
+          </div>
+        </button>
 
       <style jsx>{`
         @keyframes float {

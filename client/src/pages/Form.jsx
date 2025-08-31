@@ -291,7 +291,7 @@ const Form = () => {
       console.log('Submitting project data:', projectData);
 
       // Submit to backend API
-      const response = await fetch('/api/projects', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
