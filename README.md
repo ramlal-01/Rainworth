@@ -94,18 +94,15 @@ c) Detailed project report is available in the /docs folder.
 
 👥 Team Members / Contributors
 
-a) Project Lead / Full-Stack Developer (Ramlal) – Coordinated the project, managed tasks, and contributed to both frontend & backend.
+a) Project Lead / Backend Developer (Ramlal) – Coordinated the project, managed tasks, Exteranl API integration for rainfall data and contributed to both frontend & backend.
 
 b) Frontend Developer (Riya Khandelwal) – Built the user form page using React + Vite, worked on dashboard, graphs.
 
-c) Backend Developer(Bhumika Agrawal) – Developed APIs, handled database integration, and managed server-side logic.
+c) Backend Developer(Bhumika Agrawal) – Developed APIs, handled database integration, controllers and managed server-side logic.
 
 d) Research & Documentation Lead(Nandini Gupta) – Collected data , prepared reports, and ensured project aligns with sustainability goals.
 
 e) UI/UX Designer(Remanshu Goyal) – Designed landing page layouts, and improved user experience for the dashboard.
 
 f)  Frontend Developer and Google Map APIS(Pranav kumar Sharma) – Built the calculator of rooftop area via all possible polygons using Google Map APIs & mapPage using react+vite , worked with Google Cloud console for Google Map APIs also with throttling quota limit for rate limit
-
-📜 License
-
-a) This project is licensed under the MIT License – see the LICENSE.
+ 
