@@ -87,7 +87,7 @@ const RainwaterDashboard = () => {
         }
 
         // Fetch project details
-        const projectResponse = await fetch(`/api/projects/${projectId}`);
+        const projectResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/projects/${projectId}`);
         if (!projectResponse.ok) {
           throw new Error('Failed to fetch project details');
         }
@@ -109,7 +109,7 @@ const RainwaterDashboard = () => {
         });
 
         // Fetch calculation data
-        const calcResponse = await fetch(`/api/projects/${projectId}/calculation`);
+        const calcResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/projects/${projectId}/calculation`);
         if (!calcResponse.ok) {
           throw new Error('Failed to fetch calculation data');
         }
