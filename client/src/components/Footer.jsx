@@ -4,7 +4,7 @@
           <div className="text-3xl font-bold mb-4">
             <span className="text-shimmer">Rainworth</span>
           </div>
-          <p className="text-xl mb-4">&copy; 2024 Rainworth. All Rights Reserved.</p>
+          <p className="text-xl mb-4">&copy; 2025 Rainworth. All Rights Reserved.</p>
           <p className="text-gray-300 text-lg">
             An initiative of the Ministry of Jal Shakti, Government of India.
           </p>
