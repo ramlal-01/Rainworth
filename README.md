@@ -106,3 +106,4 @@ e) UI/UX Designer(Remanshu Goyal) – Designed landing page layouts, and improve
 
 f)  Frontend Developer and Google Map APIS(Pranav kumar Sharma) – Built the calculator of rooftop area via all possible polygons using Google Map APIs & mapPage using react+vite , worked with Google Cloud console for Google Map APIs also with throttling quota limit for rate limit
  
+# rain
